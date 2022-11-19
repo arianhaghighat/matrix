@@ -22,27 +22,36 @@ nano vars.yml
 </pre>
 
 در فایل باز شده ۳ متغیر را می بایست تغییر دهید.
-1) matrix_domain --> domian **main domain (without sub domain)
-2) generate secret --> recomeded: using (pwgen -s 64 1)
-matrix_homeserver_generic_secret_key: 
-matrix_postgres_connection_password:
-3)email address
-matrix_ssl_lets_encrypt_support_email:
-
-4) add
-matrix_nginx_proxy_base_domain_serving_enabled: true
+1) جلوی matrix_domain آدرس دامنه خود را بدون ساب دامنه وارد کنید (example.com)
+2)  جلوی دو متغییر زیر یک پسورد قوی وارد کنید. برای ساخت پسورد در لینوکس می توانید از <code> pwgen -s 64 1 </code> استفاده کنید. 
+<pre> matrix_homeserver_generic_secret_key: 
+matrix_postgres_connection_password: </pre>
 
 
-cd ../..
+3) جلوی <code> matrix_ssl_lets_encrypt_support_email: </code> ایمیل خود را برای گواهینامه ssl وارد کنید.
+4) در پایین فایل عبارت زیر را اضافه کنید:
+<pre> matrix_nginx_proxy_base_domain_serving_enabled: true </pre>
+
+فایل را ببندید و کد های زیر را اجرا کنید:
+<pre> cd ../..
 cp ../examples/hosts ./
-nano hosts
+nano hosts </pre>
 
-[matrix_servers]
-matrix.<your-domain> ansible_host=<your-server's external IP address> ansible_ssh_user=root
+در فایل باز شده خط آخر را ویرایش کرده و آدرس دامنه و ip سرور خودتون را وارد کنید. 
+اگر مستقیما دستورات را داخل سرور اجرا میکنید عبارت <code> ansible_connection=local </code> را نیز در اخر خط اضافه کنید. 
 
-cd 
+حالا دستورات زیر را وارد کنید
+<pre> cd 
 cd matrix-docker-ansible-deploy/
-make roles
+make roles </pre>
 
-ansible-playbook -i inventory/hosts setup.yml --tags=setup-all
-ansible-playbook -i inventory/hosts setup.yml --tags=start
+تنظیمات تمام است! حالا نوبت نصب اصلی برنامه است ابتدا دستور زیر را وارد کنید. توجه کنید این مرحله چندین دقیقه طول می کشد
+
+<pre> ansible-playbook -i inventory/hosts setup.yml --tags=setup-all </pre>
+سپس با این دستور فایل ها رو اجرا کنید
+<pre> ansible-playbook -i inventory/hosts setup.yml --tags=start </pre>
+
+به طور پیش فرض کاربر جدید امکان عضو شدن به سرور شما رو ندارد. با جرای دستور زیر می توانید کاربر جدید اضافه کنید:
+
+<pre> ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=<your-username> password=<your-password> admin=<yes|no>' --tags=register-user </pre>
+
