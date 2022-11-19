@@ -51,7 +51,7 @@ make roles </pre>
 سپس با این دستور فایل ها رو اجرا کنید
 <pre> ansible-playbook -i inventory/hosts setup.yml --tags=start </pre>
 
-به طور پیش فرض کاربر جدید امکان عضو شدن به سرور شما رو ندارد. با جرای دستور زیر می توانید کاربر جدید اضافه کنید:
+به طور پیش فرض کاربر جدید امکان عضو شدن به سرور شما رو ندارد. با جرای دستور زیر می توانید کاربر جدید اضافه کنید. username و password را در دستور زیر ویرایش کنید و انتخاب کنید کاربر دسترسی ادمین داشته باشد یا خیر
 
-<pre> ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=<your-username> password=<your-password> admin=<yes|no>' --tags=register-user </pre>
+<pre> ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=[your-username] password=[your-password] admin=[yes|no]' --tags=register-user </pre>
 
