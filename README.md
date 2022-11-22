@@ -13,8 +13,7 @@ apt install ansible</pre>
 
 در این مرحله دستورات لازم را به ترتیب اجرا کنید. توجه کنید به جای [domain] آدرس دامنه خودتون را وارد کنید.
 <pre>
-cd matrix-docker-ansible-deploy/
-cd inventory/host_vars/
+cd matrix-docker-ansible-deploy/cd inventory/host_vars/
 mkdir matrix.[domain]
 cd matrix.[domain]
 cp ../../../examples/vars.yml ./
