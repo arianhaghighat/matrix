@@ -1,56 +1,205 @@
-# matrix
-How to install matrix using ansible
 
-سرور را آپدیت کنید و فایل های لازم رو نصب کنید:
+# Matrix Self-Hosted Server Setup (Using Ansible)
 
-<pre>apt update && apt upgrade
-apt install make
-apt install git
-apt install ansible</pre>
+This guide explains how to install and run a Matrix server using [matrix-docker-ansible-deploy](https://github.com/spantaleev/matrix-docker-ansible-deploy) on your own VPS. It includes optional features like a Synapse admin panel and a Telegram bridge.
 
-در این مرحله فایل های لازم را از گیت هاب دریافت کنید
-<pre> git clone https://github.com/spantaleev/matrix-docker-ansible-deploy.git </pre>
+> 🖥️ **Note:** These instructions assume you're running commands *directly* on your server, which is why the `ansible_connection=local` setting is used.
 
-در این مرحله دستورات لازم را به ترتیب اجرا کنید. توجه کنید به جای [domain] آدرس دامنه خودتون را وارد کنید.
-<pre>
-cd matrix-docker-ansible-deploy/cd inventory/host_vars/
-mkdir matrix.[domain]
-cd matrix.[domain]
+---
+
+## 🧱 Prerequisites
+
+Start by updating your server and installing required packages:
+
+```bash
+apt update && apt upgrade -y
+apt install make git ansible -y
+```
+
+Clone the official deployment repository:
+
+```bash
+git clone https://github.com/spantaleev/matrix-docker-ansible-deploy.git
+```
+
+---
+
+## 📂 Step 1: Set Up Your Domain Configuration
+
+Navigate to the inventory folder and create a directory for your domain:
+
+```bash
+cd matrix-docker-ansible-deploy/inventory/host_vars/
+mkdir matrix.[your-domain]
+cd matrix.[your-domain]
 cp ../../../examples/vars.yml ./
 nano vars.yml
-</pre>
+```
 
-در فایل باز شده ۳ متغیر را می بایست تغییر دهید.
-1) جلوی matrix_domain آدرس دامنه خود را بدون ساب دامنه وارد کنید (example.com)
-2)  جلوی دو متغییر زیر یک پسورد قوی وارد کنید. برای ساخت پسورد در لینوکس می توانید از <code> pwgen -s 64 1 </code> استفاده کنید. 
-<pre> matrix_homeserver_generic_secret_key: 
-matrix_postgres_connection_password: </pre>
+In the `vars.yml` file, configure the following variables:
 
+1. **Set your main domain** (without subdomain):
 
-3) جلوی <code> matrix_ssl_lets_encrypt_support_email: </code> ایمیل خود را برای گواهینامه ssl وارد کنید.
-4) در پایین فایل عبارت زیر را اضافه کنید:
-<pre> matrix_nginx_proxy_base_domain_serving_enabled: true </pre>
+```yaml
+matrix_domain: "[your-domain]"  # e.g. example.com
+```
 
-فایل را ببندید و کد های زیر را اجرا کنید:
-<pre> cd ../..
+2. **Generate secure secrets** using:
+
+```bash
+pwgen -s 64 1
+```
+
+Then set these values in `vars.yml`:
+
+```yaml
+matrix_homeserver_generic_secret_key: "<secure-random-string>"
+matrix_postgres_connection_password: "<secure-random-string>"
+```
+
+3. **Set your SSL email**:
+
+```yaml
+matrix_ssl_lets_encrypt_support_email: "your-email@example.com"
+```
+
+4. **Add the following extra configuration** to the bottom of the file:
+
+```yaml
+matrix_nginx_proxy_base_domain_serving_enabled: true
+matrix_static_files_container_labels_base_domain_enabled: true
+```
+
+---
+
+## 🗂️ Step 2: Configure Ansible Hosts
+
+Navigate back and set up the `hosts` file:
+
+```bash
+cd ../..
 cp ../examples/hosts ./
-nano hosts </pre>
+nano hosts
+```
 
-در فایل باز شده خط آخر را ویرایش کرده و آدرس دامنه و ip سرور خودتون را وارد کنید. 
-اگر مستقیما دستورات را داخل سرور اجرا میکنید عبارت <code> ansible_connection=local </code> را نیز در اخر خط اضافه کنید. 
+Replace the last line with the following, customized for your domain and IP:
 
-حالا دستورات زیر را وارد کنید
-<pre> cd 
+```ini
+matrix.[your-domain] ansible_host=<your-server-ip> ansible_connection=local ansible_become=true
+```
+
+> Replace `<your-server-ip>` with the actual IP address of your server.
+
+---
+
+## ⚙️ Step 3: Install Ansible Roles
+
+Run the following commands to install the necessary Ansible roles:
+
+```bash
+cd
 cd matrix-docker-ansible-deploy/
-make roles </pre>
+make roles
+```
 
-تنظیمات تمام است! حالا نوبت نصب اصلی برنامه است ابتدا دستور زیر را وارد کنید. توجه کنید این مرحله چندین دقیقه طول می کشد
+---
 
-<pre> ansible-playbook -i inventory/hosts setup.yml --tags=setup-all </pre>
-سپس با این دستور فایل ها رو اجرا کنید
-<pre> ansible-playbook -i inventory/hosts setup.yml --tags=start </pre>
+## 🚀 Step 4: Deploy Matrix Server
 
-به طور پیش فرض کاربر جدید امکان عضو شدن به سرور شما رو ندارد. با جرای دستور زیر می توانید کاربر جدید اضافه کنید. username و password را در دستور زیر ویرایش کنید و انتخاب کنید کاربر دسترسی ادمین داشته باشد یا خیر
+Run the full setup process (this will take a few minutes):
 
-<pre> ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=[your-username] password=[your-password] admin=[yes|no]' --tags=register-user </pre>
+```bash
+ansible-playbook -i inventory/hosts setup.yml --tags=setup-all
+```
 
+Start the server:
+
+```bash
+ansible-playbook -i inventory/hosts setup.yml --tags=start
+```
+
+---
+
+## 👤 Step 5: Register a New User
+
+To create a new user, run:
+
+```bash
+ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=<your-username> password=<your-password> admin=[yes|no]' --tags=register-user
+```
+
+Example:
+
+```bash
+ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=arian password=secure123 admin=yes' --tags=register-user
+```
+
+You can now log in via [Element Web](https://app.element.io) using:
+
+```
+@<your-username>:<your-domain>
+```
+
+---
+
+## 🔐 Optional: Enable Synapse Admin Panel
+
+To enable the Synapse admin panel, edit your domain configuration again:
+
+```bash
+nano inventory/host_vars/matrix.[your-domain]/vars.yml
+```
+
+Add this line at the end:
+
+```yaml
+matrix_synapse_admin_enabled: true
+```
+
+Then apply the changes:
+
+```bash
+ansible-playbook -i inventory/hosts setup.yml --tags=setup-all
+ansible-playbook -i inventory/hosts setup.yml --tags=start
+```
+
+The panel will be available at:
+
+```
+https://matrix.[your-domain]/synapse-admin/
+```
+
+---
+
+## 💬 Optional: Enable Telegram Bridge
+
+To bridge Matrix with Telegram, enable and configure Mautrix-Telegram.
+
+Edit `vars.yml`:
+
+```yaml
+matrix_mautrix_telegram_enabled: true
+matrix_mautrix_telegram_api_id: "<your-telegram-app-id>"
+matrix_mautrix_telegram_api_hash: "<your-telegram-api-hash>"
+matrix_mautrix_telegram_config:
+  homeserver:
+    address: "http://matrix-synapse:8008"
+    domain: "[your-domain]"
+```
+
+Then deploy the bridge:
+
+```bash
+ansible-playbook -i inventory/hosts setup.yml --tags=setup-all
+ansible-playbook -i inventory/hosts setup.yml --tags=start
+```
+
+> For full setup instructions of the Telegram bridge, refer to the [official bridge docs](https://github.com/spantaleev/matrix-docker-ansible-deploy/blob/master/docs/configuring-playbook-bridge-mautrix-telegram.md).
+
+---
+
+## 📝 Notes
+
+- Make sure your domain has DNS records set up correctly (e.g., `matrix.[your-domain]` pointing to your VPS IP).
+- If running behind a firewall or cloud provider, open the required ports (typically 80 and 443).
+- Use tools like [Element Web](https://app.element.io) or [Hydrogen](https://hydrogen.element.io/) to log in and chat.
