@@ -66,7 +66,6 @@ matrix_ssl_lets_encrypt_support_email: "your-email@example.com"
 4. **Add the following extra configuration** to the bottom of the file:
 
 ```yaml
-matrix_nginx_proxy_base_domain_serving_enabled: true
 matrix_static_files_container_labels_base_domain_enabled: true
 ```
 
